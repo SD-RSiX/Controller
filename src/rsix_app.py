@@ -65,8 +65,8 @@ class ExampleSwitch13(app_manager.RyuApp):
         match = parser.OFPMatch()
 
         # create an instance of OFPActionOutput class setting controller as the
-        # output port and uses NO_BUFFER because in this case this flow does not
-        # references any packet in switch's buffer.
+        # output port and NO_BUFFER, so that the switch will not buffer the
+        # the packets that generate a PacketIn
         actions = [
             parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
                                    ofproto.OFPCML_NO_BUFFER)
@@ -89,7 +89,7 @@ class ExampleSwitch13(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
-        # build a flow_mod message and send it out
+        # create a flow_mod message and send it out
         inst = [
             parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)
         ]
@@ -141,4 +141,19 @@ class ExampleSwitch13(app_manager.RyuApp):
         else:
             out_port = ofproto.OFPP_FLOOD
 
-        #contruct action list
+        # create the action list
+        actions = [parser.OFPActionOutput(out_port)]
+
+        # install a flow entry to avoid packet_in next time.
+        if out_port != ofproto.OFPP_FLOOD:
+            match = parser.OFPMatch(in_port=in_port, eth_dst=dst)
+            self.add_flow(datapath, 1, match, actions)
+
+        # construct packet_out message and send it.
+        out = parser.OFPPacketOut(
+            datapath=datapath,
+            buffer_id=ofproto.OFP_NO_BUFFER,
+            in_port=in_port,
+            actions=actions,
+            data=msg.data)
+        datapath.send_msg(out)
