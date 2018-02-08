@@ -1,26 +1,34 @@
 # Code and explanations from
 # https://osrg.github.io/ryu-book/en/html/switching_hub.html
+# http://ryu.readthedocs.io/en/latest/api_ref.html
 
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
-from ryu.ofproto import ofproto_v1_3
+from ryu.ofproto import ofproto_v1_3, ofproto_v1_4, ofproto_v1_5
 from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 
 
-class ExampleSwitch13(app_manager.RyuApp):
-    """OpenFlow 1.3 learning switch
+class LearningSwitch(app_manager.RyuApp):
+    """OpenFlow learning switch
+
     A Ryu application inherits from ryu.base.app_manager that manages OpenFlow
     operations.
     """
 
-    ###### OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    # A list of supported OpenFlow versions for this RyuApp. The default is all
+    # versions supported by the framework.
+    OFP_VERSIONS = [
+        ofproto_v1_3.OFP_VERSION, ofproto_v1_4.OFP_VERSION,
+        ofproto_v1_5.OFP_VERSION
+    ]
 
     def __init__(self, *args, **kwargs):
-        super(ExampleSwitch13, self).__init__(*args, **kwargs)
-        # Initiates a dictionary to keep MAC port mapping
+        super(LearningSwitch, self).__init__(*args, **kwargs)
+
+        # Initiates a dictionary to store MAC-port mapping
         self.mac_to_port = {}
 
     # When Ryu receives an OpenFlow message, it generates an event handler with
@@ -72,7 +80,7 @@ class ExampleSwitch13(app_manager.RyuApp):
                                    ofproto.OFPCML_NO_BUFFER)
         ]
 
-        # PacketOut:
+        # PacketOut
         self.add_flow(datapath, 0, match, actions)
 
     def add_flow(self, datapath, priority, match, actions):
@@ -89,15 +97,22 @@ class ExampleSwitch13(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
-        # create a flow_mod message and send it out
+        # Instructions are executed when a packet matches a flow entry; it
+        # differs from the actions lists that the switch executes at the end of
+        # the processing.
+        # Using "ofproto.OFPIT_APPLY_ACTIONS" parameter, the controller informs
+        # the switch to run the action list in that very same processing stage.
         inst = [
             parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)
         ]
+
+        # Create the flow mod message
         mod = parser.OFPFlowMod(
             datapath=datapath,
             priority=priority,
             match=match,
             instructions=inst)
+
         datapath.send_msg(mod)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
@@ -116,44 +131,61 @@ class ExampleSwitch13(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
-        # get Datapach ID to identify OpenFlow switches
+        # Get Datapach ID to identify OpenFlow switches.
+        # The setdefault() dictionary method returns the value of the key (dpid)
+        # if it exists. If the the key does not exist, it adds the key (dpid)
+        # with an empty dictionary as value.
         dpid = datapath.id
         self.mac_to_port.setdefault(dpid, {})
 
-        # analyse the received packets using the packet library
+        # Analyse the received packets using the packet library
+        # Extract MAC addresses (src, dst)
         pkt = packet.Packet(msg.data)
         eth_pkt = pkt.get_protocol(ethernet.ethernet)
         dst = eth_pkt.dst
         src = eth_pkt.src
 
-        # get the received port number from the PacketIn message
+        # Get the in_port from the ev.msg object.
+        # Options available for OF 1.3 at https://goo.gl/qwxpaU
         in_port = msg.match['in_port']
 
+        # print
         self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
 
-        # learn a MAC address to avoid FLOOD next time
+        # Learn the MAC to avoid flooding next time
+        # The next line associates a source MAC (src) to a port (in_port) for
+        # the switch the PacketIn came from.
         self.mac_to_port[dpid][src] = in_port
 
-        # if the destination MAC address is already learned, decide which port
-        # to output the packet, otherwise flood it.
+        # If the controller already has the destination MAC address in its table
+        # (mac_to_port dictionary), it takes the out port from there. If not, it
+        # sets all ports as the out port.
         if dst in self.mac_to_port[dpid]:
             out_port = self.mac_to_port[dpid][dst]
         else:
             out_port = ofproto.OFPP_FLOOD
 
-        # create the action list
+        # Create the action list. Set out port as the only action for matching
+        # packets.
         actions = [parser.OFPActionOutput(out_port)]
 
-        # install a flow entry to avoid packet_in next time.
+        # If controller knows the destination MAC, it installs a flow entry to
+        # process new packets with the same source and destination MAC.
         if out_port != ofproto.OFPP_FLOOD:
             match = parser.OFPMatch(in_port=in_port, eth_dst=dst)
-            self.add_flow(datapath, 1, match, actions)
+            self.add_flow(datapath, 10, match, actions)
 
-        # construct packet_out message and send it.
+        # PacketOut
+        # Now the controller process the packet that generated the PacketIn
+        # through a PacketOut message. If the destination MAC is known, the
+        # switch sends the packet through the port where the destination MAC
+        # comes; else the switch floods the packet to all ports.
         out = parser.OFPPacketOut(
             datapath=datapath,
             buffer_id=ofproto.OFP_NO_BUFFER,
             in_port=in_port,
             actions=actions,
             data=msg.data)
+
+        # send packet out
         datapath.send_msg(out)
