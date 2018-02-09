@@ -9,7 +9,7 @@ services:
         networks:
             sd_rsix:
                 ipv4_address: 10.10.10.254
-        command: ["ryu-manager", "ryu/ryu/app/rsix_app.py"]
+        command: ["ryu-manager", "${APP}"]
 
 networks:
     sd_rsix:
