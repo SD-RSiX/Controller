@@ -1,5 +1,5 @@
-# Copyright (C) 2018 Lucas Arbiza - [SD]RSiX Project
-#               2016 Nippon Telegraph and Telephone Corporation.
+# Copyright (C) 2016 Nippon Telegraph and Telephone Corporation.
+#               2018 [SD]RSiX Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,10 +22,7 @@
 # the original version has been modified to make it in a multi-switches learning
 # app (the original version does not work with more than one switch).
 #
-# Code and explanations from:
-#  - https://osrg.github.io/ryu-book/en/html/switching_hub.html
-#  - http://ryu.readthedocs.io/en/latest/api_ref.html
-#
+
 
 from ryu.base import app_manager
 from ryu.controller import ofp_event
