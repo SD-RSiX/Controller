@@ -18,9 +18,9 @@
 #
 # This file started as a fully commented version of the ExampleSwitch13.py App
 # from the Ryu project
-# (https://github.com/osrg/ryu/blob/master/ryu/app/example_switch_13.py), but
-# the original version has been modified to make it in a multi-switches learning
-# app (the original version does not work with more than one switch).
+# (https://github.com/osrg/ryu/blob/master/ryu/app/example_switch_13.py). It now
+# installs the NORMAL flow entry on every switch that connects to the
+# controller.
 #
 
 from ryu.base import app_manager
@@ -28,8 +28,6 @@ from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3, ofproto_v1_4, ofproto_v1_5
-from ryu.lib.packet import packet
-from ryu.lib.packet import ethernet
 
 
 class LearningSwitch(app_manager.RyuApp):
@@ -93,13 +91,15 @@ class LearningSwitch(app_manager.RyuApp):
         # create an empty match to match every packet
         match = parser.OFPMatch()
 
-        # create an instance of OFPActionOutput class setting controller as the
-        # output port and NO_BUFFER, so that the switch will not buffer the
-        # the packets that generate a PacketIn
+        # Create an instance of OFPActionOutput class to set the flow-entry's
+        # action as NORMAL, this way the switch will forward every packet as a
+        # normal L2 switch without generation PacketIn.
         actions = [
             parser.OFPActionOutput(ofproto.OFPP_NORMAL,
                                    ofproto.OFPCML_NO_BUFFER)
         ]
+
+        self.logger.info("Configuring SW %s with NORMAL flow entry.", datapath.id)
 
         # PacketOut
         self.add_flow(datapath, 0, match, actions)
