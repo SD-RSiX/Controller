@@ -113,6 +113,9 @@ class LearningSwitch(app_manager.RyuApp):
             match: match object the packets must match to this entry be applied
             action: action the switch will perform with the packet when a match
                     occurs
+            buffer_id (default=None): id of the packet buffered at the switch.
+                    When there is no buffered packet associated it must be set
+                    to OFP_NO_BUFFER in the flow_mod.
         """
 
         ofproto = datapath.ofproto
@@ -174,14 +177,14 @@ class LearningSwitch(app_manager.RyuApp):
         pkt = packet.Packet(msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
 
-        # ignore lldp packet
+        # Ignore lldp packets
         if eth.ethertype == ether_types.ETH_TYPE_LLDP:
             return
 
         dst = eth.dst
         src = eth.src
 
-        # Get Datapach ID to identify OpenFlow switches.
+        # Get Datapath ID to identify OpenFlow switches.
         # The setdefault() dictionary method returns the value of the key (dpid)
         # if it exists. If the the key does not exist, it adds the key (dpid)
         # with an empty dictionary as value.
@@ -190,7 +193,7 @@ class LearningSwitch(app_manager.RyuApp):
 
         # Log
         self.logger.info(
-            "\tPacketIn:\n\t\tSwitch: {0:16d}\n\t\tSrc: {1}; Dest: {2} \n\t\tIn port: {3}".
+            "PacketIn:\n\tSwitch: {0:16d}\n\tSrc: {1}; Dest: {2}\n\tIn port: {3}".
             format(dpid, src, dst, in_port))
 
         # Learn the MAC to avoid flooding next time
