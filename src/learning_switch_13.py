@@ -16,7 +16,7 @@
 #
 # ------------------------------------------------------------------------------
 #
-# This file started as a fully commented version of the ExampleSwitch13.py App
+# This file started as a fully commented version of the Simple Switch 13 App
 # from the Ryu project
 # (https://github.com/osrg/ryu/blob/master/ryu/app/simple_switch_13.py), but
 # the original version has been modified to make it in a multi-switches learning
@@ -93,11 +93,16 @@ class LearningSwitch(app_manager.RyuApp):
         # create an instance of OFPActionOutput class setting controller as the
         # output port and NO_BUFFER, so that the switch will not buffer the
         # the packets that generate a PacketIn
-        actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
-                                          ofproto.OFPCML_NO_BUFFER)]
+        actions = [
+            parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
+                                   ofproto.OFPCML_NO_BUFFER)
+        ]
 
         # Install the flow-entry
         self.add_flow(datapath, 0, match, actions)
+
+        self.logger.info("New switch: {0:16d}\tOF version: {1:2d}".format(
+            datapath.id, ofproto.OFP_VERSION))
 
     def add_flow(self, datapath, priority, match, actions, buffer_id=None):
         """PacketOut - Install a flow entry on a switch
@@ -118,17 +123,24 @@ class LearningSwitch(app_manager.RyuApp):
         # the processing.
         # Using "ofproto.OFPIT_APPLY_ACTIONS" parameter, the controller informs
         # the switch to run the action list in that very same processing stage.
-        inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS,
-                                             actions)]
+        inst = [
+            parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)
+        ]
 
         # Create the flow mod message
         if buffer_id:
-            mod = parser.OFPFlowMod(datapath=datapath, buffer_id=buffer_id,
-                                    priority=priority, match=match,
-                                    instructions=inst)
+            mod = parser.OFPFlowMod(
+                datapath=datapath,
+                buffer_id=buffer_id,
+                priority=priority,
+                match=match,
+                instructions=inst)
         else:
-            mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
-                                    match=match, instructions=inst)
+            mod = parser.OFPFlowMod(
+                datapath=datapath,
+                priority=priority,
+                match=match,
+                instructions=inst)
         datapath.send_msg(mod)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
@@ -162,9 +174,10 @@ class LearningSwitch(app_manager.RyuApp):
         pkt = packet.Packet(msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
 
+        # ignore lldp packet
         if eth.ethertype == ether_types.ETH_TYPE_LLDP:
-            # ignore lldp packet
             return
+
         dst = eth.dst
         src = eth.src
 
@@ -176,7 +189,9 @@ class LearningSwitch(app_manager.RyuApp):
         self.mac_to_port.setdefault(dpid, {})
 
         # Log
-        self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
+        self.logger.info(
+            "\tPacketIn:\n\t\tSwitch: {0:16d}\n\t\tSrc: {1}; Dest: {2} \n\t\tIn port: {3}".
+            format(dpid, src, dst, in_port))
 
         # Learn the MAC to avoid flooding next time
         # The next line associates a source MAC (src) to a port (in_port) for
@@ -215,8 +230,12 @@ class LearningSwitch(app_manager.RyuApp):
         # through a PacketOut message. If the destination MAC is known, the
         # switch sends the packet through the port where the destination MAC
         # comes; else the switch floods the packet to all ports.
-        out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
-                                  in_port=in_port, actions=actions, data=data)
+        out = parser.OFPPacketOut(
+            datapath=datapath,
+            buffer_id=msg.buffer_id,
+            in_port=in_port,
+            actions=actions,
+            data=data)
 
         # send packet out
         datapath.send_msg(out)
