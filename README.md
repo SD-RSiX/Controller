@@ -43,6 +43,8 @@ docker network create --subnet=10.10.10.0/24 --gateway=10.10.10.1 sd_rsix
 
 ## Running
 
+By default, the command below runs the rsix_app.py program, from the 'src' directory. In order to run another app, check the section "Running a different app."
+
 Run the following command from inside the project's root folder:
 
 ```
@@ -61,4 +63,47 @@ If you want to remove everything created by the _docker-compose_ script, run:
 ```
 # Remove container, network and the image locally generated:
 docker-compose down --rmi local
+```
+
+# Running a different app
+
+You may run a different app by simply exporting the APP variable with a different file. Docker-compose reads the APP variable when it runs the controller container.
+
+## Apps
+
+In addition to the default app (rsix_app.py), this project has the following apps:
+
+* __learning_switch_13.py__: It is a widely commented version of the "[simple_switch13.py](https://github.com/osrg/ryu/blob/master/ryu/app/simple_switch_13.py)" file that developed by Ryu team. It also has some changes in the way it logs switches connections and PacketIn. This app makes OpenFlow devices operate as regular L2 switches through installing flow entries to connect devices MAC-to-MAC.
+* __normal__: Configures OpenFlow switches to operate in NORMAL mode (normal L2 switches); this app installs the NORMAL flow only as soon as a switch connects to the controller.
+
+The files above are copied to the Ryu apps directory where are all Ryu's default apps you may use (check the list [here](https://github.com/osrg/ryu/tree/master/ryu/app)).
+
+## Changing the app and running
+
+Configure the app to run by exporting the APP variable:
+
+```
+export APP=ryu/ryu/app/<app file name>.py
+```
+
+The files inside 'src' directory and Ryu's default apps are in the container's ryu/ryu/app/ directory. Unless you change the path where the files are copied to, always use ryu/ryu/app/.
+
+```
+e.g.:
+export APP=ryu/ryu/app/learning_switch13.py
+```
+
+Now, rebuild the container and run:
+
+```
+docker-compose up --build
+```
+
+## Getting back to default
+
+Unset the APP variable and rebuild:
+
+```
+unset APP
+docker-compose up --build
 ```
