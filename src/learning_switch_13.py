@@ -114,8 +114,8 @@ class LearningSwitch(app_manager.RyuApp):
             action: action the switch will perform with the packet when a match
                     occurs
             buffer_id (default=None): id of the packet buffered at the switch.
-                    When there is no buffered packet associated it must be set
-                    to OFP_NO_BUFFER in the flow_mod.
+                    When there is no buffered packet associated buffer_id must
+                    be set to OFP_NO_BUFFER in the flow_mod.
         """
 
         ofproto = datapath.ofproto
@@ -217,13 +217,20 @@ class LearningSwitch(app_manager.RyuApp):
         # process new packets with the same source and destination MAC.
         if out_port != ofproto.OFPP_FLOOD:
             match = parser.OFPMatch(in_port=in_port, eth_dst=dst, eth_src=src)
-            # verify if we have a valid buffer_id, if yes avoid to send both
-            # flow_mod & packet_out
+
+            # Check if buffer_id is valid.
+            # If the message has a valid buffer_id, it means the switch kept the
+            # original packet so that controller does not need to send a
+            # PacketOut (function returns after installing the flow_mod)
             if msg.buffer_id != ofproto.OFP_NO_BUFFER:
                 self.add_flow(datapath, 1, match, actions, msg.buffer_id)
                 return
+            # If there is no a valid buffer_id, the switch does not have the
+            # original packet, and the controller must send a PakectOut in order
+            # the switch can forward the original packet sent to the controller.
             else:
                 self.add_flow(datapath, 1, match, actions)
+
         data = None
         if msg.buffer_id == ofproto.OFP_NO_BUFFER:
             data = msg.data
