@@ -47,8 +47,7 @@ class LearningSwitch(app_manager.RyuApp):
         super(LearningSwitch, self).__init__(*args, **kwargs)
 
         # Initiates a dictionary to store MAC-port mapping
-        # mac_to_port structure:
-        #   { datapath_id, value={ key=src value=port, key=dst value=port } }
+        # mac_to_port structure: { datapath_id, { MAC, port } }
         self.mac_to_port = {}
 
     # When Ryu receives an OpenFlow message, it generates an event handler with
@@ -183,8 +182,8 @@ class LearningSwitch(app_manager.RyuApp):
         if eth.ethertype == ether_types.ETH_TYPE_LLDP:
             return
 
-        dst = eth.dst
-        src = eth.src
+        dst_MAC = eth.dst
+        src_MAC = eth.src
 
         # Get Datapath ID to identify OpenFlow switches.
         # The setdefault() dictionary method returns the value of the key (dpid)
@@ -196,18 +195,18 @@ class LearningSwitch(app_manager.RyuApp):
         # Log
         self.logger.info(
             "PacketIn:\n\tSwitch: {0:16d}\n\tSrc: {1}; Dest: {2}\n\tIn port: {3}".
-            format(dpid, src, dst, in_port))
+            format(dpid, src_MAC, dst_MAC, in_port))
 
         # Learn the MAC to avoid flooding next time
-        # The next line associates a source MAC (src) to a port (in_port) for
-        # the switch the PacketIn came from.
-        self.mac_to_port[dpid][src] = in_port
+        # The next line associates a source MAC (src_MAC) to a port (in_port)
+        # for the switch the PacketIn came from.
+        self.mac_to_port[dpid][src_MAC] = in_port
 
         # If the controller already has the destination MAC address in its table
         # (mac_to_port dictionary), it takes the out port from there. If not, it
         # sets all ports as the out port.
-        if dst in self.mac_to_port[dpid]:
-            out_port = self.mac_to_port[dpid][dst]
+        if dst_MAC in self.mac_to_port[dpid]:
+            out_port = self.mac_to_port[dpid][dst_MAC]
         else:
             out_port = ofproto.OFPP_FLOOD
 
@@ -218,7 +217,8 @@ class LearningSwitch(app_manager.RyuApp):
         # If controller knows the destination MAC, it installs a flow entry to
         # process new packets with the same source and destination MAC.
         if out_port != ofproto.OFPP_FLOOD:
-            match = parser.OFPMatch(in_port=in_port, eth_dst=dst, eth_src=src)
+            match = parser.OFPMatch(
+                in_port=in_port, eth_dst=dst_MAC, eth_src=src_MAC)
 
             # Check if buffer_id is valid.
             # If the message has a valid buffer_id, it means the switch kept the
