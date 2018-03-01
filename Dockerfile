@@ -12,5 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM osrg/ryu:latest
+
+FROM ubuntu:16.04
+
+MAINTAINER Lucas Arbiza <lucas@arbiza.com.br>
+
+RUN apt-get update && apt-get install -y python3-pip
+RUN pip3 install --upgrade pip
+RUN pip3 install ryu
+
 COPY src/ ryu/ryu/app/
