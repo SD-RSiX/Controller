@@ -47,6 +47,8 @@ class LearningSwitch(app_manager.RyuApp):
         super(LearningSwitch, self).__init__(*args, **kwargs)
 
         # Initiates a dictionary to store MAC-port mapping
+        # mac_to_port structure:
+        #   { datapath_id, value={ key=src value=port, key=dst value=port } }
         self.mac_to_port = {}
 
     # When Ryu receives an OpenFlow message, it generates an event handler with
