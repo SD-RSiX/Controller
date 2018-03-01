@@ -12,21 +12,115 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#from ryu.base import app_manager
+from ryu.controller import ofp_event
+#from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
+#from ryu.controller.handler import set_ev_cls
+from ryu.ofproto import ofproto_v1_3
 
-# from ryu.controller import ofp_event
-# from ryu.controller.handler import set_ev_cls
-# from ryu.ofproto import *
+#from ryu.lib.packet import packet
+#from ryu.lib.packet import ethernet
+#from ryu.lib.packet import ether_types
 
 
 class Switch:
-    """docstring for Switch.
+    """OpenFlow switches abstraction.
+
+    Objects of this class store a set of information about devices connected to
+    the controller. OpenFlow events will update switch objects so that to keep
+    it consistent with network status.
+
+    Attributes:
+        datapath (ev.msg.datapath): connections between controller and OF switch
     """
 
-    def __init__(self, datapath_id):
-        self._datapath_id = datapath_id
+    def __init__(self, datapath):
 
-    # def _packet_out(self, arg):
-    #
-    # def add_flow(self, arg):
-    #
-    # def del_flow(self, arg):
+        # Initiates a dictionary to store MAC-port mapping
+        # mac_to_port structure: { MAC, port }
+        self._mac_to_port = {}
+
+        self._datapath = datapath
+        self._datapath_id = self._datapath.id
+        self._of_version = self._datapath.ofproto.OFP_VERSION
+
+        self._table_miss()
+
+    def _table_miss(self):
+        """Install table-miss flow entry
+
+        Table-miss flow entry configures the switch to forward unmatched packets
+        to the controller.
+        """
+
+        # ofproto module that supports the OpenFlow version in use
+        ofproto = self._datapath.ofproto
+
+        # ofproto_parser module
+        parser = self._datapath.ofproto_parser
+
+        # create an empty match to match every packet
+        match = parser.OFPMatch()
+
+        # create an instance of OFPActionOutput class setting controller as the
+        # output port.
+        actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER)]
+
+        # and NO_BUFFER, so that the switch will not buffer the
+        # the packets that generate a PacketIn
+        # actions = [
+        #     parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
+        #                            ofproto.OFPCML_NO_BUFFER)
+        # ]
+
+        # Instructions are executed when a packet matches a flow entry; it
+        # differs from the actions lists that the switch executes at the end of
+        # the processing.
+        # Using "ofproto.OFPIT_APPLY_ACTIONS" parameter, the controller informs
+        # the switch to run the action list in that very same processing stage.
+        instructions = [
+            parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)
+        ]
+
+        self.add_flow(0, match, instructions, actions)
+
+    def add_flow(self, priority, match, instructions, actions, buffer_id=None):
+        """ Install a flow mod on the switch
+
+        Args:
+            priority (int): the priority the flow entry must be given
+            match (OFPMatch): match object the packets must match to this entry
+                    be applied
+            instructions (OFPInstructionActions): configure the action set or
+                    pipeline processing
+            action: action the switch will perform with the packet when a match
+                    occurs
+            buffer_id (default=None): id of the packet buffered at the switch.
+                    When there is no buffered packet associated buffer_id must
+                    be set to OFP_NO_BUFFER in the flow_mod.
+        """
+
+        parser = self._datapath.ofproto_parser
+
+        # Create the flow mod message
+        if buffer_id:
+            mod = parser.OFPFlowMod(
+                datapath=self._datapath,
+                buffer_id=buffer_id,
+                priority=priority,
+                match=match,
+                instructions=instructions)
+        else:
+            mod = parser.OFPFlowMod(
+                datapath=self._datapath,
+                priority=priority,
+                match=match,
+                instructions=instructions)
+
+        self._datapath.send_msg(mod)
+
+    def del_flow(self, arg):
+        pass
+
+    def get_flow_entries(self):
+        pass
