@@ -23,7 +23,7 @@ from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 
-from sd_ixp.ofswitch import OFSwitch
+from sd_ixp.ofswitch import Switch
 
 class SD_RSiX(app_manager.RyuApp):
     """OpenFlow learning switch
@@ -69,7 +69,7 @@ class SD_RSiX(app_manager.RyuApp):
             ev (ev): instance of the OpenFlow event handler class
         """
 
-        #OFSwitch(ev.msg.datapath)
+        Switch(ev.msg.datapath.id)
 
     def add_flow(self, datapath, priority, match, actions, buffer_id=None):
         """PacketOut - Install a flow entry on a switch

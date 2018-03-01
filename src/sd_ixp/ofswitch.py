@@ -18,7 +18,7 @@
 # from ryu.ofproto import *
 
 
-class OFSwitch:
+class Switch:
     """docstring for Switch.
     """
 
