@@ -86,22 +86,9 @@ class SD_RSiX(app_manager.RyuApp):
             self.logger.info("ARP")
         elif eth.ethertype == ether_types.ETH_TYPE_IPV6:
             for p in pkt.protocols:
-                if p.protocol_name == 'icmpv6':# and 'type_=135' in p:
-                    self.logger.info(p)
-
-            #icpmv6_pkt = pkt.get_protocols(icmpv6.icmpv6)
-            # for p in pkt.protocols:
-            #     #self.logger.info("Name: {}; type: {}".format(
-            #     #    p.protocol_name, p.get_packet_type))
-            #     if p.protocol_name == 'icmpv6':
-            #         icpmv6_pkt = pkt.get_protocols(icmpv6.icmpv6)
-            #         for algo in icpmv6_pkt:
-            #             self.logger.info("opa: {}".format(algo))
-
-
-
-
-        # pkt = packet.Packet(array.array('B', ev.msg.data))
-        # for p in pkt.protocols:
-        #     print(p)
-        # print('-' * 80)
+                if p.protocol_name == 'icmpv6' and p.type_ == 135:
+                    
+                    # self.logger.info("pacote: {}".format(p))
+                    # self.logger.info("Object Type: {}".format(type(p)))
+                    # self.logger.info(
+                    #     "code: {}; type: {}".format(p.code, p.type_))
