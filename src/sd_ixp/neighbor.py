@@ -12,51 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ryu.controller import ofp_event
 from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 
 
-def discovery_handler(eth_pkt):
+def discovery_handler(msg):
     """
 
     Args:
-        pkt (packet.Packet(msg.data)): packet object containing layer 2 data
+        msg (ev.msg):
     """
+    pkt = packet.Packet(msg.data)
 
-    # ICMPv6
-    #
-    # ethernet(dst='33:33:ff:00:00:01', ethertype=34525, src='00:50:79:66:68:01')
-    # ipv6(
-    #     dst='ff02::1:ff00:1',
-    #     ext_hdrs=[],
-    #     flow_label=0,
-    #     hop_limit=255,
-    #     nxt=58,
-    #     payload_length=32,
-    #     src='2001:db8::4',
-    #     traffic_class=0,
-    #     version=6)
-    # icmpv6(
-    #     code=0,
-    #     csum=15471,
-    #     data=nd_neighbor(
-    #         dst='2001:db8::1',
-    #         option=nd_option_sla(
-    #             data=None, hw_src='00:50:79:66:68:01', length=1),
-    #         res=0),
-    #     type_=135)
-
-
-    # print('-' * 80)
-    #
-    # if eth_pkt.ethertype == ether_types.ETH_TYPE_ARP:
-    #     print("ARP")
-    # elif eth_pkt.ethertype == ether_types.ETH_TYPE_IPV6:
-    #
-    #
-    #
-    # print('-' * 80)
+    dst_MAC = pkt.get_protocols(ethernet.ethernet)[0].dst
+    src_MAC = pkt.get_protocols(ethernet.ethernet)[0].src
 
 
 def lldp_handler(llpd_packet):

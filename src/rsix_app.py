@@ -79,14 +79,14 @@ class SD_RSiX(app_manager.RyuApp):
             self.logger.debug("packet truncated: only %s of %s bytes",
                               ev.msg.msg_len, ev.msg.total_len)
 
-        pkt = packet.Packet(ev.msg.data)
-        eth = pkt.get_protocols(ethernet.ethernet)[0]
+        #pkt = packet.Packet(ev.msg.data)
+        eth = packet.Packet(ev.msg.data).get_protocols(ethernet.ethernet)[0]
 
         if eth.ethertype == ether_types.ETH_TYPE_ARP:
-            neighbor.discovery_handler(pkt)
+            neighbor.discovery_handler(ev.msg)
 
         if eth.ethertype == ether_types.ETH_TYPE_IPV6:
             for p in pkt.protocols:
                 if p.protocol_name == 'icmpv6' and (p.type_ == 135 or
                                                     p.type_ == 136):
-                    neighbor.discovery_handler(pkt)
+                    neighbor.discovery_handler(ev.msg)
