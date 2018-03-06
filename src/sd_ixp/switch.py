@@ -25,21 +25,19 @@ class Switch:
 
     Attributes:
         _datapath (ev.msg.datapath): connections between controller and OFswitch
-        _datapath_id (ev.msg.datapath.id): switch's unique identification
         _of_version (ev.msg.datapath.ofproto.OFP_VERSION): OpenFlow version
-        _mac_to_port (dictionary): Maps MAC addresses to VLANs and ports. The
-            structure is {Port, {MAC, VLAN}}
+        _ports (dictionary): Maps ports to what is connected to it (AS or
+            another IXP's switch)
     """
 
     def __init__(self, datapath):
 
         # Initialize the MAC-port-VLAN dictionary mapping
-        self._mac_to_port = {}
+        self._ports = {}
 
         # TODO(lucas): When a new switch connects,
 
         self._datapath = datapath
-        self._datapath_id = self._datapath.id
         self._of_version = self._datapath.ofproto.OFP_VERSION
 
         self._table_miss()
