@@ -23,7 +23,7 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from ryu.lib.packet import icmpv6
 
-from sd_ixp.ofswitch import Switch
+from sd_ixp.switch import Switch
 from sd_ixp import neighbor
 
 import array
