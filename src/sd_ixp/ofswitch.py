@@ -16,7 +16,6 @@ from ryu.controller import ofp_event
 from ryu.ofproto import ofproto_v1_3
 
 
-
 class Switch:
     """OpenFlow switches abstraction.
 
@@ -25,14 +24,19 @@ class Switch:
     it consistent with network status.
 
     Attributes:
-        datapath (ev.msg.datapath): connections between controller and OF switch
+        _datapath (ev.msg.datapath): connections between controller and OFswitch
+        _datapath_id (ev.msg.datapath.id): switch's unique identification
+        _of_version (ev.msg.datapath.ofproto.OFP_VERSION): OpenFlow version
+        _mac_to_port (dictionary): Maps MAC addresses to VLANs and ports. The
+            structure is {Port, {MAC, VLAN}}
     """
 
     def __init__(self, datapath):
 
-        # Initiates a dictionary to store MAC-port mapping
-        # mac_to_port structure: { MAC, port }
+        # Initialize the MAC-port-VLAN dictionary mapping
         self._mac_to_port = {}
+
+        # TODO(lucas): When a new switch connects,
 
         self._datapath = datapath
         self._datapath_id = self._datapath.id
@@ -112,6 +116,13 @@ class Switch:
                 instructions=instructions)
 
         self._datapath.send_msg(mod)
+
+    def l2_learning(self, msg):
+        """ Layer 2 learning feature
+
+        Learn MAC addresses
+        """
+        pass
 
     def get_flow_entries(self):
         pass
