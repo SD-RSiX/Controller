@@ -16,7 +16,7 @@ from ryu.controller import ofp_event
 from ryu.ofproto import ofproto_v1_3
 
 
-class Switch:
+class OFSwitch:
     """OpenFlow switches abstraction.
 
     Objects of this class store a set of information about devices connected to

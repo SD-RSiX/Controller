@@ -12,13 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import 
+from . import location
+from . import ofswitch
 
 class IX:
-    """docstring for IXP.
+    """ IX class is an abstraction of the entire SD Internet Exchange.
 
+    Objects of this class hold all the information of an IXP.
+    This is the only one interface to the entire SD infrastructure.
 
+    Attributes:
+        name (str): unique name the identifies the IXP
     """
 
-    def __init__(self, arg):
-        self.arg = arg
+    def __init__(self, name):
+        self.name = name
+
+        # TODO: An IX must object will be created with only a unique name, all
+        #       other data will be retrieved from database.
+
+        self._locations = {}
