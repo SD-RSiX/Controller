@@ -23,30 +23,26 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from ryu.lib.packet import icmpv6
 
-from sd_ixp.switch import Switch
-from sd_ixp import neighbor
-
-import array
-
 
 class SD_RSiX(app_manager.RyuApp):
-    """OpenFlow learning switch
+    """ [SD]RSiX Ryu App
 
-    A Ryu application inherits from ryu.base.app_manager that manages OpenFlow
-    operations.
+    This class inherits from *ryu.base.app_manager*, and triggers the
+    appropriate handlers from the sd_ixp package according to the OpenFlow
+    events.
+
+    Attributes:
+        rsix (IX): sd_ixp.IX object that provides functionalities to manage
+                   the IXP with OpenFlow
     """
 
     # A list of supported OpenFlow versions for this RyuApp. The default is all
     # versions supported by the framework.
-    OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
+    #OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
     def __init__(self, *args, **kwargs):
         super(SD_RSiX, self).__init__(*args, **kwargs)
 
-        # Initiates a dictionary to store switch objects
-        # Structure:
-        #       { datapath_id, Switch }
-        self.switches = {}
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_up(self, ev):
@@ -60,7 +56,6 @@ class SD_RSiX(app_manager.RyuApp):
             ev (ev): instance of the OpenFlow event handler class
         """
 
-        self.switches[ev.msg.datapath.id] = Switch(ev.msg.datapath)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):

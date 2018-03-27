@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import switch
+from . import 
 
-class IXP:
+class IX:
     """docstring for IXP.
 
 
@@ -22,7 +22,3 @@ class IXP:
 
     def __init__(self, arg):
         self.arg = arg
-
-        # Dictionary that stores all connected switches
-        # Structure: { datapath_id, Switch }
-        self._switches = {}
