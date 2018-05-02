@@ -12,31 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import binascii
 
 def mac_from_datapath_id(datapath_id):
-    """
+        """ Extract the MAC address from the datapath ID.
 
-    """
-    binary = bin(datapath_id)[-48:]
+        The last 48 bits of the datapath ID are taken from the MAC address.
+        Ryu provides the datapath ID in decimal format.
 
-    print(binary)
+        Args:
+            datapath_id: Ryu's datapath.id in decimal format
 
+        Returns:
+            MAC: String object containing the MAC address in xx:xx:xx:xx:xx:xx
+                 format.
+        """
+
+    hex_converted = str(hex(datapath_id)[-12:])
     MAC = str()
+
     start = 0
-    end = 4
-    column_counter = 0
+    end = 2
 
-    while end <= 48:
-        MAC += hex( int( binary[start:end], 2 ) )[-1:]
-        start += 4
-        end += 4
-        column_counter += 1
+    while end <= 10:
+        MAC += hex_converted[start:end] + ":"
+        start = end
+        end += 2
 
-        if (column_counter % 2) == 0 and len(MAC) < 15:
-            MAC += ':'
+    MAC += hex_converted[start:end]
 
     return MAC
-
-
-print("Output: {}".format(mac_from_datapath_id(10111104338072038465)))
